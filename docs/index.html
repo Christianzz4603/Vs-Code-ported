@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Studio - VS Code for Android</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #1e1e1e;
+            --bg-sidebar: #252526;
+            --bg-card: #2d2d2d;
+            --accent: #007acc;
+            --accent-hover: #0098ff;
+            --text-main: #cccccc;
+            --text-heading: #ffffff;
+            --text-sub: #858585;
+            --border: #3c3c3c;
+            --success: #4caf50;
+            --warning: #ffb300;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+        }
+
+        header {
+            background-color: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border);
+            padding: 2rem 1.5rem;
+            text-align: center;
+        }
+
+        .hero-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--text-heading);
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-logo span {
+            color: var(--accent);
+        }
+
+        .tagline {
+            font-size: 1.1rem;
+            color: var(--text-sub);
+            max-width: 650px;
+            margin: 0 auto 1.5rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--accent);
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-heading);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-card);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 2.5rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+
+        .card-icon {
+            font-size: 1.8rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .card h3 {
+            color: var(--text-heading);
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card p {
+            color: var(--text-sub);
+            font-size: 0.95rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+        }
+
+        section h2 {
+            font-size: 1.6rem;
+            color: var(--text-heading);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        pre, code {
+            font-family: 'Fira Code', monospace;
+            background-color: #121212;
+            color: #d4d4d4;
+            border-radius: 6px;
+        }
+
+        pre {
+            padding: 1rem;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            margin-top: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        ul {
+            list-style-type: square;
+            padding-left: 1.2rem;
+            color: var(--text-main);
+        }
+
+        ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        footer {
+            border-top: 1px solid var(--border);
+            background-color: var(--bg-sidebar);
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--text-sub);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="hero-logo">
+            ⚡ Code Studio <span>Android</span>
+        </div>
+        <p class="tagline">An IDE experience on Android featuring full Jetpack Compose UI, Room DB persistence, Git Source Control, and Gemini AI Workspace Copilot.</p>
+        <div class="cta-buttons">
+            <a href="https://github.com" class="btn">View on GitHub</a>
+            <a href="#features" class="btn btn-secondary">Explore Features</a>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <section id="features">
+            <h2>✨ Core Capabilities</h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-icon">🤖</div>
+                    <h3>Gemini AI Workspace Copilot</h3>
+                    <p>Indexed workspace awareness across files, symbols, and diagnostics. Proposes multi-file code refactoring, preview diffs, accept/reject, and instant rollback.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🔀</div>
+                    <h3>Git & Sync Commit</h3>
+                    <p>Stage modified files, inspect status, and trigger 1-click <code>Sync Commit</code> (automatically staging, committing, and pushing branch updates).</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">⌨️</div>
+                    <h3>Command Palette & Shortuts</h3>
+                    <p>Press <code>Ctrl+Shift+P</code> to trigger VS Code commands: AI bug fixes, multi-file refactoring, split editor toggle, and terminal actions.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🖥️</div>
+                    <h3>Split Editor & Activity Bar</h3>
+                    <p>Side-by-side file editing with synchronized tabs, syntax theme customization, line numbers, and interactive terminal console logs.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🗄️</div>
+                    <h3>Room DB Local Persistence</h3>
+                    <p>Offline file management powered by Android Room Database with fast transactional state retention.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">⚡</div>
+                    <h3>CI/CD Release Packaging</h3>
+                    <p>Automated GitHub Actions workflow for building release APK artifacts and publishing GitHub Pages documentation.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="quickstart">
+            <h2>🚀 Building the Android App</h2>
+            <p>You can compile and package the app using Gradle or run unit tests on any machine:</p>
+
+            <pre><code># Grant executable permissions
+chmod +x gradlew
+
+# Build Debug APK
+./gradlew assembleDebug
+
+# Build Release APK
+./gradlew assembleRelease
+
+# Run Robolectric Unit Tests
+./gradlew testDebugUnitTest</code></pre>
+        </section>
+
+        <section id="architecture">
+            <h2>📐 Architecture & Tech Stack</h2>
+            <ul>
+                <li><strong>UI Layer:</strong> Jetpack Compose with Material 3 Dynamic Color & Custom VS Code Dark Palette.</li>
+                <li><strong>State Management:</strong> ViewModel, Kotlin Coroutines, and <code>StateFlow</code> / <code>collectAsStateWithLifecycle</code>.</li>
+                <li><strong>Database:</strong> Room DB with Kotlin Symbol Processing (KSP).</li>
+                <li><strong>Network:</strong> OkHttp3 & Rest API integration with Gemini 3.5 Flash.</li>
+            </ul>
+        </section>
+
+    </div>
+
+    <footer>
+        <p>© 2026 Code Studio for Android — Powered by Google AI Studio & Jetpack Compose</p>
+    </footer>
+
+</body>
+</html>

@@ -60,8 +60,14 @@ fun CodeStudioAppScreen(viewModel: MainViewModel) {
     val isSidebarVisible by viewModel.isSidebarVisible.collectAsStateWithLifecycle()
     val isPanelVisible by viewModel.isPanelVisible.collectAsStateWithLifecycle()
     val extensions by viewModel.extensions.collectAsStateWithLifecycle()
+    val installedPackages by viewModel.installedExtensionPackages.collectAsStateWithLifecycle()
     val problems by viewModel.problems.collectAsStateWithLifecycle()
     val breakpoints by viewModel.breakpoints.collectAsStateWithLifecycle()
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(Unit) {
+        viewModel.initExtensionManager(context)
+    }
 
     val colors = remember(settings.themeMode) { getThemePalette(settings.themeMode) }
     val activeOpenTab = remember(openTabs, activeTabId) { openTabs.find { it.fileId == activeTabId } }
@@ -159,8 +165,13 @@ fun CodeStudioAppScreen(viewModel: MainViewModel) {
                             ActivityTab.EXTENSIONS -> {
                                 ExtensionsPanel(
                                     extensions = extensions,
+                                    installedPackages = installedPackages,
                                     colors = colors,
-                                    onToggleInstall = { viewModel.toggleExtensionInstalled(it) }
+                                    onToggleInstallMarketplace = { viewModel.toggleExtensionInstalled(it) },
+                                    onInstallJarFile = { viewModel.installSampleJarExtension(context) },
+                                    onToggleExtensionEnabled = { viewModel.toggleExtensionEnabled(it) },
+                                    onUninstallExtension = { viewModel.uninstallExtension(it) },
+                                    onExecuteCommand = { viewModel.executeExtensionCommand(it) }
                                 )
                             }
                             ActivityTab.AI_COPILOT -> {

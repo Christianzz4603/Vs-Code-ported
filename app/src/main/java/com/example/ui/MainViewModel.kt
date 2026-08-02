@@ -64,6 +64,114 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val workspaceSummary: StateFlow<String>
     private val _undoSnapshots = mutableMapOf<String, Map<String, String>>() // EditID -> (FilePath -> OldContent)
 
+    private val extensionHandlers = mutableMapOf<String, (List<Any>) -> Any?>()
+    var extensionManager: com.example.extension.manager.ExtensionManager? = null
+        private set
+
+    val installedExtensionPackages: StateFlow<List<com.example.extension.loader.ExtensionPackage>>
+        get() = extensionManager?.installedPackages ?: MutableStateFlow(emptyList())
+
+    fun initExtensionManager(context: android.content.Context) {
+        if (extensionManager != null) return
+
+        val editorAPI = object : com.example.extension.api.EditorAPI {
+            override fun getActiveFilePath(): String? = _openTabs.value.find { it.fileId == _activeTabId.value }?.path
+            override fun getActiveFileContent(): String? = _openTabs.value.find { it.fileId == _activeTabId.value }?.content
+            override fun updateActiveFileContent(newContent: String) { updateActiveTabContent(newContent) }
+            override fun insertTextAtCursor(text: String) { insertSymbolToActiveFile(text) }
+            override fun getSelectedText(): String? = null
+        }
+
+        val workspaceAPI = object : com.example.extension.api.WorkspaceAPI {
+            override fun getWorkspacePath(): String? = currentProject.value?.name
+            override fun listWorkspaceFiles(): List<String> = currentProjectFiles.value.map { it.path }
+            override fun readFile(relativePath: String): String? = currentProjectFiles.value.find { it.path == relativePath || it.name == relativePath }?.content
+            override fun writeFile(relativePath: String, content: String): Boolean {
+                val existing = currentProjectFiles.value.find { it.path == relativePath || it.name == relativePath }
+                if (existing != null) {
+                    viewModelScope.launch { repository.saveFileContent(existing.id, content) }
+                    return true
+                }
+                val projId = _currentProjectId.value ?: return false
+                viewModelScope.launch { repository.createFile(projId, relativePath.substringAfterLast("/"), content, relativePath, false) }
+                return true
+            }
+            override fun deleteFile(relativePath: String): Boolean {
+                val existing = currentProjectFiles.value.find { it.path == relativePath || it.name == relativePath } ?: return false
+                deleteFile(existing)
+                return true
+            }
+        }
+
+        val cmdRegistry = object : com.example.extension.api.CommandRegistry {
+            override fun registerCommand(commandId: String, handler: (List<Any>) -> Any?) {
+                extensionHandlers[commandId] = handler
+            }
+            override fun executeCommand(commandId: String, vararg args: Any): Any? {
+                return extensionHandlers[commandId]?.invoke(args.toList())
+            }
+        }
+
+        val uiRegistry = object : com.example.extension.api.UIContributionRegistry {
+            override fun setStatusBarMessage(message: String, timeoutMs: Long) {
+                appendTerminalLine("StatusBar: $message", TerminalLineType.SYSTEM)
+            }
+            override fun addActivityBarTab(id: String, title: String, iconName: String) {
+                appendTerminalLine("Extension registered UI tab: $title ($id)", TerminalLineType.SYSTEM)
+            }
+            override fun showDialog(title: String, message: String, onConfirm: () -> Unit) {
+                appendTerminalLine("Dialog [$title]: $message", TerminalLineType.SYSTEM)
+                onConfirm()
+            }
+        }
+
+        val termAPI = object : com.example.extension.api.TerminalAPI {
+            override fun sendTerminalInput(inputCommand: String) { runTerminalCommand(inputCommand) }
+            override fun writeTerminalOutput(output: String) { appendTerminalLine(output, TerminalLineType.OUTPUT) }
+        }
+
+        val notifAPI = object : com.example.extension.api.NotificationAPI {
+            override fun showInfo(message: String) { appendTerminalLine("ℹ️ $message", TerminalLineType.SUCCESS) }
+            override fun showWarning(message: String) { appendTerminalLine("⚠️ $message", TerminalLineType.SYSTEM) }
+            override fun showError(message: String) { appendTerminalLine("❌ $message", TerminalLineType.ERROR) }
+        }
+
+        // 1. Generate sample .jar extensions in storage if not present
+        val extDir = java.io.File(context.filesDir, "installed_extensions").apply { if (!exists()) mkdirs() }
+        com.example.extension.sample.SampleExtensionGenerator.ensureSampleExtensions(context, extDir)
+
+        // 2. Initialize ExtensionManager
+        val mgr = com.example.extension.manager.ExtensionManager(
+            context = context,
+            editorAPI = editorAPI,
+            workspaceAPI = workspaceAPI,
+            commandRegistry = cmdRegistry,
+            uiRegistry = uiRegistry,
+            terminalAPI = termAPI,
+            notificationAPI = notifAPI
+        )
+        mgr.loadAllExtensions()
+        extensionManager = mgr
+    }
+
+    fun toggleExtensionEnabled(extensionId: String) {
+        extensionManager?.toggleExtensionEnabled(extensionId)
+    }
+
+    fun uninstallExtension(extensionId: String) {
+        extensionManager?.uninstallExtension(extensionId)
+    }
+
+    fun executeExtensionCommand(commandId: String) {
+        extensionHandlers[commandId]?.invoke(emptyList()) ?: appendTerminalLine("Executing extension command: $commandId", TerminalLineType.SYSTEM)
+    }
+
+    fun installSampleJarExtension(context: android.content.Context) {
+        val extDir = java.io.File(context.filesDir, "installed_extensions")
+        com.example.extension.sample.SampleExtensionGenerator.ensureSampleExtensions(context, extDir)
+        extensionManager?.loadAllExtensions()
+    }
+
     init {
         val db = AppDatabase.getDatabase(application)
         repository = CodeRepository(db.codeDao())
