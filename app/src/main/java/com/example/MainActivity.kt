@@ -144,7 +144,8 @@ fun CodeStudioAppScreen(viewModel: MainViewModel) {
                                     modifiedFiles = modifiedFiles,
                                     commits = projectCommits,
                                     colors = colors,
-                                    onCommit = { viewModel.commitChanges(it) }
+                                    onCommit = { viewModel.commitChanges(it) },
+                                    onSyncCommit = { viewModel.syncCommit(it) }
                                 )
                             }
                             ActivityTab.DEBUG -> {
@@ -280,6 +281,11 @@ fun CodeStudioAppScreen(viewModel: MainViewModel) {
                         "git_commit" -> {
                             viewModel.selectActivityTab(ActivityTab.SOURCE_CONTROL)
                             viewModel.toggleSidebar(true)
+                        }
+                        "git_sync" -> {
+                            viewModel.selectActivityTab(ActivityTab.SOURCE_CONTROL)
+                            viewModel.toggleSidebar(true)
+                            viewModel.syncCommit("Sync commit from Command Palette")
                         }
                         "new_file" -> viewModel.createFile("Untitled.kt", false)
                         "toggle_split" -> viewModel.toggleSplitEditor()

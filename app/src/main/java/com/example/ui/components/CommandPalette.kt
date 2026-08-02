@@ -44,6 +44,7 @@ fun CommandPalette(
             CommandPaletteItem("cmd_fix", "Gemini AI: Fix Code Errors & Bugs", "Gemini", "Alt+F") { onExecuteCommand("ai_fix") },
             CommandPaletteItem("cmd_run", "Run: Execute Active File Script", "Run", "F5") { onExecuteCommand("run_file") },
             CommandPaletteItem("cmd_commit", "Git: Commit Changes to Repository", "Source Control", "Ctrl+Enter") { onExecuteCommand("git_commit") },
+            CommandPaletteItem("cmd_sync_commit", "Git: Sync Commit (Stage, Commit & Push)", "Source Control", "Ctrl+Shift+S") { onExecuteCommand("git_sync") },
             CommandPaletteItem("cmd_new_file", "File: Create New File in Workspace", "File", "Ctrl+N") { onExecuteCommand("new_file") },
             CommandPaletteItem("cmd_split", "View: Split Editor Side-By-Side", "View", "Ctrl+\\") { onExecuteCommand("toggle_split") },
             CommandPaletteItem("cmd_extensions", "View: Show Extension Marketplace", "View", "Ctrl+Shift+X") { onExecuteCommand("open_extensions") }

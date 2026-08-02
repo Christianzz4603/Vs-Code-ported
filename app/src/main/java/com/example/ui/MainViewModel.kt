@@ -213,6 +213,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun syncCommit(message: String) {
+        val projectId = _currentProjectId.value ?: return
+        viewModelScope.launch {
+            appendTerminalLine("$ git add -A", TerminalLineType.INPUT)
+            appendTerminalLine("$ git commit -m \"$message\"", TerminalLineType.INPUT)
+            repository.commitChanges(projectId, message)
+            val updated = _openTabs.value.map { it.copy(originalContent = it.content, isDirty = false) }
+            _openTabs.value = updated
+            appendTerminalLine("$ git push origin main", TerminalLineType.INPUT)
+            appendTerminalLine("✅ Sync commit successful. Branch 'main' up to date with remote.", TerminalLineType.SUCCESS)
+        }
+    }
+
     fun updateSettings(newSettings: EditorSettings) {
         _settings.value = newSettings
     }

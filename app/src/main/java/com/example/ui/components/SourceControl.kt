@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,6 +31,7 @@ fun SourceControl(
     commits: List<GitCommitEntity>,
     colors: EditorColorScheme,
     onCommit: (String) -> Unit,
+    onSyncCommit: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var commitMessage by remember { mutableStateOf("") }
@@ -84,20 +86,41 @@ fun SourceControl(
                 modifier = Modifier.fillMaxWidth().height(64.dp)
             )
 
-            Button(
-                onClick = {
-                    if (commitMessage.isNotBlank()) {
-                        onCommit(commitMessage.trim())
-                        commitMessage = ""
-                    }
-                },
-                enabled = modifiedFiles.isNotEmpty() && commitMessage.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = colors.accentColor),
-                modifier = Modifier.fillMaxWidth().height(38.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Icon(imageVector = Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Commit (${modifiedFiles.size})", fontSize = 12.sp)
+                Button(
+                    onClick = {
+                        if (commitMessage.isNotBlank()) {
+                            onCommit(commitMessage.trim())
+                            commitMessage = ""
+                        }
+                    },
+                    enabled = modifiedFiles.isNotEmpty() && commitMessage.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.accentColor),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.weight(1f).height(38.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Check, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Commit", fontSize = 11.sp)
+                }
+
+                Button(
+                    onClick = {
+                        val msg = if (commitMessage.isNotBlank()) commitMessage.trim() else "Sync commit: ${System.currentTimeMillis()}"
+                        onSyncCommit(msg)
+                        commitMessage = ""
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.functionColor),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    modifier = Modifier.weight(1f).height(38.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Sync, contentDescription = null, tint = Color.Black, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Sync Commit", fontSize = 11.sp, color = Color.Black)
+                }
             }
 
             HorizontalDivider(color = colors.activityBarBackground)
