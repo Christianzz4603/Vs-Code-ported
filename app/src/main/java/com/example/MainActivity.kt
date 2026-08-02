@@ -103,18 +103,13 @@ fun CodeStudioAppScreen(viewModel: MainViewModel) {
                 onNewProject = { viewModel.createProject("New Project", "Native Android App", "compose") },
                 onRunFile = { viewModel.runActiveFile() }
             )
-        },
-        bottomBar = {
-            StatusBar(
-                activeTab = activeOpenTab,
-                colors = colors
-            )
         }
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .imePadding()
                 .background(colors.editorBackground)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -284,6 +279,12 @@ fun CodeStudioAppScreen(viewModel: MainViewModel) {
                         }
                     }
                 }
+
+                // Bottom VS Code Status Bar
+                StatusBar(
+                    activeTab = activeOpenTab,
+                    colors = colors
+                )
             }
 
             // Command Palette Modal Overlay (Ctrl+P / Ctrl+Shift+P)

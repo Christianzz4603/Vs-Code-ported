@@ -100,6 +100,7 @@ class JarExtensionLoader(private val appContext: Context) {
         var loadErrorMsg: String? = null
 
         try {
+            jarFile.setReadOnly()
             val dexClassLoader = DexClassLoader(
                 jarFile.absolutePath,
                 dexOptDir.absolutePath,

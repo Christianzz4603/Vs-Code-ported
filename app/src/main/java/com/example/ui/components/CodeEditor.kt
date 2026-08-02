@@ -184,7 +184,9 @@ fun CodeEditor(
             val visibleHeight = verticalScrollState.viewportSize
             if (visibleHeight > 0) {
                 val currentScroll = verticalScrollState.value
-                if (targetY < currentScroll || targetY + lineHeightPx > currentScroll + visibleHeight) {
+                val cursorBottom = targetY + lineHeightPx.toInt()
+                val marginPx = (lineHeightPx * 2).toInt() // 2-line safety buffer
+                if (targetY - marginPx < currentScroll || cursorBottom + marginPx > currentScroll + visibleHeight) {
                     val scrollGoal = (targetY - visibleHeight / 3).coerceIn(0, verticalScrollState.maxValue)
                     verticalScrollState.animateScrollTo(scrollGoal)
                 }
@@ -195,7 +197,6 @@ fun CodeEditor(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .imePadding()
             .background(colors.editorBackground)
     ) {
         // Sticky Breadcrumb Bar
