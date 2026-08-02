@@ -64,11 +64,54 @@ data class SearchResult(
     val matchEndIndex: Int
 )
 
+enum class ProposedChangeType {
+    EDIT_FILE,
+    CREATE_FILE,
+    DELETE_FILE,
+    RENAME_FILE
+}
+
+enum class ProposedEditStatus {
+    PENDING,
+    ACCEPTED,
+    REJECTED,
+    ROLLED_BACK
+}
+
+data class ProposedFileChange(
+    val fileId: Long? = null,
+    val filePath: String,
+    val changeType: ProposedChangeType,
+    val oldContent: String? = null,
+    val newContent: String? = null,
+    val explanation: String = ""
+)
+
+data class ProposedWorkspaceEdit(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val title: String,
+    val confidenceScore: Int = 95,
+    val explanation: String,
+    val fileChanges: List<ProposedFileChange>,
+    var status: ProposedEditStatus = ProposedEditStatus.PENDING,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+data class WorkspaceIndex(
+    val projectName: String,
+    val totalFiles: Int,
+    val totalSymbols: Int,
+    val fileSummaryList: List<String>,
+    val symbolsMap: Map<String, List<String>>, // Symbol -> list of file paths where found
+    val dependencyGraph: Map<String, List<String>> // File -> imported files
+)
+
 data class AIMessage(
     val id: String = java.util.UUID.randomUUID().toString(),
     val sender: AISender,
     val content: String,
     val codeSnippet: String? = null,
+    val proposedEdit: ProposedWorkspaceEdit? = null,
     val timestamp: Long = System.currentTimeMillis()
 )
 

@@ -25,7 +25,8 @@ data class EditorColorScheme(
     val numberColor: Color,
     val functionColor: Color,
     val typeColor: Color,
-    val accentColor: Color
+    val accentColor: Color,
+    val warningColor: Color = Color(0xFFFFB300)
 )
 
 fun getThemePalette(mode: ThemeMode): EditorColorScheme {

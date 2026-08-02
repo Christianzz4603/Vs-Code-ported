@@ -54,6 +54,7 @@ fun CodeStudioAppScreen(viewModel: MainViewModel) {
     val terminalLines by viewModel.terminalLines.collectAsStateWithLifecycle()
     val aiMessages by viewModel.aiMessages.collectAsStateWithLifecycle()
     val isAIGenerating by viewModel.isAIGenerating.collectAsStateWithLifecycle()
+    val workspaceSummary by viewModel.workspaceSummary.collectAsStateWithLifecycle()
 
     val isCommandPaletteOpen by viewModel.isCommandPaletteOpen.collectAsStateWithLifecycle()
     val isSidebarVisible by viewModel.isSidebarVisible.collectAsStateWithLifecycle()
@@ -166,9 +167,13 @@ fun CodeStudioAppScreen(viewModel: MainViewModel) {
                                     messages = aiMessages,
                                     activeTab = activeOpenTab,
                                     isGenerating = isAIGenerating,
+                                    workspaceSummary = workspaceSummary,
                                     colors = colors,
                                     onSendMessage = { prompt, type -> viewModel.sendAIMessage(prompt, type) },
-                                    onApplyCodeToActiveFile = { code -> viewModel.applyAICodeToActiveFile(code) }
+                                    onApplyCodeToActiveFile = { code -> viewModel.applyAICodeToActiveFile(code) },
+                                    onAcceptWorkspaceEdit = { edit -> viewModel.acceptWorkspaceEdit(edit) },
+                                    onRejectWorkspaceEdit = { edit -> viewModel.rejectWorkspaceEdit(edit) },
+                                    onRollbackWorkspaceEdit = { edit -> viewModel.rollbackWorkspaceEdit(edit) }
                                 )
                             }
                             ActivityTab.TERMINAL -> {}

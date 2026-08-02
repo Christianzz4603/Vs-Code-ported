@@ -10,6 +10,7 @@ import com.example.data.local.ProjectEntity
 import com.example.data.repository.CodeRepository
 import com.example.model.*
 import com.example.network.GeminiService
+import com.example.util.WorkspaceIndexer
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -51,7 +52,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         listOf(
             AIMessage(
                 sender = AISender.GEMINI,
-                content = "👋 Hi! I'm your Gemini AI Copilot inside Code Studio. I can explain code, fix bugs, write unit tests, or refactor functions. Try clicking the quick action buttons or ask me anything!"
+                content = "👋 Hi! I'm your Gemini AI Copilot inside Code Studio with FULL WORKSPACE AWARENESS. I index all project files, symbols, imports, and diagnostics. Ask me to refactor across files, fix project bugs, audit security, or write unit tests!"
             )
         )
     )
@@ -59,6 +60,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _isAIGenerating = MutableStateFlow(false)
     val isAIGenerating: StateFlow<Boolean> = _isAIGenerating.asStateFlow()
+
+    val workspaceSummary: StateFlow<String>
+    private val _undoSnapshots = mutableMapOf<String, Map<String, String>>() // EditID -> (FilePath -> OldContent)
 
     init {
         val db = AppDatabase.getDatabase(application)
@@ -84,6 +88,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
+        )
+
+        workspaceSummary = combine(currentProject, currentProjectFiles) { proj, files ->
+            val projName = proj?.name ?: "Workspace"
+            val nonDir = files.filter { !it.isDirectory }
+            val index = WorkspaceIndexer.buildIndex(projName, files)
+            "${nonDir.size} Files Indexed | ${index.totalSymbols} Symbols"
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = "Indexing workspace..."
         )
 
         // Seed initial default project if empty
@@ -403,25 +418,131 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun sendAIMessage(userPrompt: String, actionType: String) {
-        val activeTab = _openTabs.value.find { it.fileId == _activeTabId.value }
         val userMsg = AIMessage(sender = AISender.USER, content = userPrompt)
         _aiMessages.value = _aiMessages.value + userMsg
         _isAIGenerating.value = true
 
+        val projName = currentProject.value?.name ?: "Workspace"
+        val files = currentProjectFiles.value
+        val activeFile = files.find { it.id == _activeTabId.value }
+        val problemMsgs = problems.value.map { "${it.fileName}:${it.lineNumber} - ${it.message}" }
+
+        val workspaceContext = WorkspaceIndexer.buildWorkspaceContextPrompt(
+            projectName = projName,
+            files = files,
+            activeFile = activeFile,
+            problems = problemMsgs
+        )
+
         viewModelScope.launch {
-            val responseText = GeminiService.generateCodeAssistantResponse(
+            val (responseText, proposedEdit) = GeminiService.generateWorkspaceResponse(
                 prompt = userPrompt,
-                activeCode = activeTab?.content,
-                language = activeTab?.language,
+                workspaceContext = workspaceContext,
                 actionType = actionType
             )
 
             val aiMsg = AIMessage(
                 sender = AISender.GEMINI,
-                content = responseText
+                content = responseText,
+                proposedEdit = proposedEdit
             )
             _aiMessages.value = _aiMessages.value + aiMsg
             _isAIGenerating.value = false
+        }
+    }
+
+    fun acceptWorkspaceEdit(edit: ProposedWorkspaceEdit) {
+        val projectId = _currentProjectId.value ?: return
+        val currentFiles = currentProjectFiles.value
+
+        // Store undo snapshot
+        val snapshot = mutableMapOf<String, String>()
+        edit.fileChanges.forEach { change ->
+            val existing = currentFiles.find { it.path == change.filePath || it.name == change.filePath }
+            if (existing != null) {
+                snapshot[change.filePath] = existing.content
+            }
+        }
+        _undoSnapshots[edit.id] = snapshot
+
+        viewModelScope.launch {
+            edit.fileChanges.forEach { change ->
+                val existing = currentFiles.find { it.path == change.filePath || it.name == change.filePath }
+                when (change.changeType) {
+                    ProposedChangeType.EDIT_FILE -> {
+                        if (existing != null && change.newContent != null) {
+                            repository.saveFileContent(existing.id, change.newContent)
+                            // Update tab if open
+                            val openIndex = _openTabs.value.indexOfFirst { it.fileId == existing.id }
+                            if (openIndex != -1) {
+                                val updatedTabs = _openTabs.value.toMutableList()
+                                updatedTabs[openIndex] = updatedTabs[openIndex].copy(content = change.newContent, isDirty = false)
+                                _openTabs.value = updatedTabs
+                            }
+                        }
+                    }
+                    ProposedChangeType.CREATE_FILE -> {
+                        val fileName = change.filePath.substringAfterLast("/")
+                        val fileId = repository.createFile(projectId, fileName, change.newContent ?: "", change.filePath, false)
+                        val created = repository.getFileById(fileId)
+                        if (created != null) openFile(created)
+                    }
+                    ProposedChangeType.DELETE_FILE -> {
+                        if (existing != null) {
+                            deleteFile(existing)
+                        }
+                    }
+                    ProposedChangeType.RENAME_FILE -> {
+                        // Handled if needed
+                    }
+                }
+            }
+
+            // Update status in messages
+            _aiMessages.value = _aiMessages.value.map { msg ->
+                if (msg.proposedEdit?.id == edit.id) {
+                    msg.copy(proposedEdit = edit.copy(status = ProposedEditStatus.ACCEPTED))
+                } else msg
+            }
+
+            appendTerminalLine("✨ Gemini AI applied ${edit.fileChanges.size} proposed changes across workspace.", TerminalLineType.SUCCESS)
+        }
+    }
+
+    fun rejectWorkspaceEdit(edit: ProposedWorkspaceEdit) {
+        _aiMessages.value = _aiMessages.value.map { msg ->
+            if (msg.proposedEdit?.id == edit.id) {
+                msg.copy(proposedEdit = edit.copy(status = ProposedEditStatus.REJECTED))
+            } else msg
+        }
+        appendTerminalLine("❌ Proposed AI workspace edits rejected by user.", TerminalLineType.SYSTEM)
+    }
+
+    fun rollbackWorkspaceEdit(edit: ProposedWorkspaceEdit) {
+        val snapshot = _undoSnapshots[edit.id] ?: return
+        val currentFiles = currentProjectFiles.value
+
+        viewModelScope.launch {
+            snapshot.forEach { (filePath, oldContent) ->
+                val existing = currentFiles.find { it.path == filePath || it.name == filePath }
+                if (existing != null) {
+                    repository.saveFileContent(existing.id, oldContent)
+                    val openIndex = _openTabs.value.indexOfFirst { it.fileId == existing.id }
+                    if (openIndex != -1) {
+                        val updatedTabs = _openTabs.value.toMutableList()
+                        updatedTabs[openIndex] = updatedTabs[openIndex].copy(content = oldContent, isDirty = false)
+                        _openTabs.value = updatedTabs
+                    }
+                }
+            }
+
+            _aiMessages.value = _aiMessages.value.map { msg ->
+                if (msg.proposedEdit?.id == edit.id) {
+                    msg.copy(proposedEdit = edit.copy(status = ProposedEditStatus.ROLLED_BACK))
+                } else msg
+            }
+
+            appendTerminalLine("↩️ Rolled back AI workspace changes for ${edit.title}.", TerminalLineType.SYSTEM)
         }
     }
 
