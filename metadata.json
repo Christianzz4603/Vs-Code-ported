@@ -1,0 +1,6 @@
+{
+  "name": "VSCode (Port)",
+  "description": "Visual Studio Code ported natively to Android with full landscape layout, command palette, activity bar, terminal, extension gallery, side bar, breadcrumbs, and Gemini AI integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
