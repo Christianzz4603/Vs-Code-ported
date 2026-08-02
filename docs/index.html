@@ -1,25 +1,60 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Studio - VS Code for Android</title>
+    <title>Documentation - Code Studio for Android</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #1e1e1e;
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-code: 'Fira Code', monospace;
+
+            /* Dark Theme Colors (VS Code Dark Default) */
+            --bg-topbar: #2c2c2c;
+            --bg-body: #1e1e1e;
             --bg-sidebar: #252526;
             --bg-card: #2d2d2d;
+            --bg-code: #141414;
+            --bg-table-header: #333333;
+            --border-color: #3c3c3c;
+            --text-primary: #cccccc;
+            --text-heading: #ffffff;
+            --text-muted: #858585;
             --accent: #007acc;
             --accent-hover: #0098ff;
-            --text-main: #cccccc;
-            --text-heading: #ffffff;
-            --text-sub: #858585;
-            --border: #3c3c3c;
-            --success: #4caf50;
-            --warning: #ffb300;
+            --accent-subtle: rgba(0, 122, 204, 0.15);
+            --callout-info-bg: #112a45;
+            --callout-info-border: #007acc;
+            --callout-warn-bg: #3a2e10;
+            --callout-warn-border: #ffb300;
+            --badge-bg: #3c3c3c;
+            --badge-text: #007acc;
+        }
+
+        [data-theme="light"] {
+            /* Light Theme Colors (VS Code Light Default) */
+            --bg-topbar: #f3f3f3;
+            --bg-body: #ffffff;
+            --bg-sidebar: #f8f8f8;
+            --bg-card: #f3f3f3;
+            --bg-code: #f0f0f0;
+            --bg-table-header: #e5e5e5;
+            --border-color: #e1e1e1;
+            --text-primary: #333333;
+            --text-heading: #000000;
+            --text-muted: #616161;
+            --accent: #0066b8;
+            --accent-hover: #005299;
+            --accent-subtle: rgba(0, 102, 184, 0.1);
+            --callout-info-bg: #e6f2ff;
+            --callout-info-border: #0066b8;
+            --callout-warn-bg: #fff8e1;
+            --callout-warn-border: #f57f17;
+            --badge-bg: #e8e8e8;
+            --badge-text: #0066b8;
         }
 
         * {
@@ -29,221 +64,534 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
+            font-family: var(--font-main);
+            background-color: var(--bg-body);
+            color: var(--text-primary);
             line-height: 1.6;
-            padding: 0;
-            margin: 0;
-        }
-
-        header {
-            background-color: var(--bg-sidebar);
-            border-bottom: 1px solid var(--border);
-            padding: 2rem 1.5rem;
-            text-align: center;
-        }
-
-        .hero-logo {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 2.2rem;
-            font-weight: 800;
-            color: var(--text-heading);
-            margin-bottom: 0.5rem;
-        }
-
-        .hero-logo span {
-            color: var(--accent);
-        }
-
-        .tagline {
-            font-size: 1.1rem;
-            color: var(--text-sub);
-            max-width: 650px;
-            margin: 0 auto 1.5rem;
-        }
-
-        .cta-buttons {
             display: flex;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
-        .btn {
-            display: inline-flex;
+        /* Top Navigation Header */
+        header.topbar {
+            background-color: var(--bg-topbar);
+            border-bottom: 1px solid var(--border-color);
+            height: 56px;
+            display: flex;
             align-items: center;
-            gap: 8px;
-            background-color: var(--accent);
-            color: #ffffff;
-            padding: 0.75rem 1.5rem;
-            border-radius: 6px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: background 0.2s ease;
-        }
-
-        .btn:hover {
-            background-color: var(--accent-hover);
-        }
-
-        .btn-secondary {
-            background-color: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-heading);
-        }
-
-        .btn-secondary:hover {
-            background-color: var(--bg-card);
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: 2.5rem auto;
+            justify-content: space-between;
             padding: 0 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-top: 1.5rem;
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--text-heading);
+            text-decoration: none;
         }
 
-        .card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1.5rem;
-            transition: transform 0.2s ease, border-color 0.2s ease;
+        .brand-icon {
+            color: var(--accent);
+            font-size: 1.3rem;
         }
 
-        .card:hover {
-            transform: translateY(-2px);
+        .brand-version {
+            font-size: 0.75rem;
+            background-color: var(--accent-subtle);
+            color: var(--accent);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .search-container {
+            position: relative;
+            width: 380px;
+        }
+
+        .search-input {
+            width: 100%;
+            background-color: var(--bg-body);
+            border: 1px solid var(--border-color);
+            color: var(--text-heading);
+            padding: 6px 12px 6px 34px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: var(--font-main);
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .search-input:focus {
             border-color: var(--accent);
         }
 
-        .card-icon {
-            font-size: 1.8rem;
-            margin-bottom: 0.75rem;
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            pointer-events: none;
         }
 
-        .card h3 {
-            color: var(--text-heading);
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .card p {
-            color: var(--text-sub);
-            font-size: 0.95rem;
-        }
-
-        section {
-            margin-bottom: 3rem;
-        }
-
-        section h2 {
-            font-size: 1.6rem;
-            color: var(--text-heading);
-            border-bottom: 2px solid var(--border);
-            padding-bottom: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        pre, code {
-            font-family: 'Fira Code', monospace;
-            background-color: #121212;
-            color: #d4d4d4;
+        .search-results-modal {
+            position: absolute;
+            top: 42px;
+            left: 0;
+            right: 0;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 6px;
+            max-height: 380px;
+            overflow-y: auto;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 200;
         }
 
-        pre {
-            padding: 1rem;
-            overflow-x: auto;
-            border: 1px solid var(--border);
-            margin-top: 0.75rem;
+        .search-result-item {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .search-result-item:hover {
+            background-color: var(--accent-subtle);
+        }
+
+        .search-result-title {
+            color: var(--accent);
+            font-weight: 600;
             font-size: 0.9rem;
         }
 
-        ul {
-            list-style-type: square;
-            padding-left: 1.2rem;
-            color: var(--text-main);
+        .search-result-snippet {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 2px;
         }
 
-        ul li {
-            margin-bottom: 0.5rem;
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
         }
 
-        footer {
-            border-top: 1px solid var(--border);
-            background-color: var(--bg-sidebar);
-            text-align: center;
-            padding: 1.5rem;
-            color: var(--text-sub);
+        .theme-toggle-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-heading);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
             font-size: 0.85rem;
+            font-family: var(--font-main);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .theme-toggle-btn:hover {
+            background-color: var(--bg-card);
+        }
+
+        /* Layout Main Container */
+        .doc-wrapper {
+            display: flex;
+            flex: 1;
+        }
+
+        /* Left Sidebar Navigation */
+        aside.sidebar {
+            width: 280px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            padding: 1.5rem 1rem;
+            position: sticky;
+            top: 56px;
+            height: calc(100vh - 56px);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .nav-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-group-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            padding-left: 8px;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 6px 10px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.88rem;
+            border-radius: 4px;
+            transition: all 0.15s ease;
+        }
+
+        .nav-link:hover {
+            background-color: var(--accent-subtle);
+            color: var(--accent);
+        }
+
+        .nav-link.active {
+            background-color: var(--accent);
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* Main Documentation Article Content */
+        main.content {
+            flex: 1;
+            padding: 2.5rem 3rem;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .breadcrumbs {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .breadcrumbs a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: var(--text-heading);
+            font-weight: 800;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .doc-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        h2 {
+            font-size: 1.45rem;
+            color: var(--text-heading);
+            margin: 2rem 0 1rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            color: var(--text-heading);
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        ul, ol {
+            margin-bottom: 1.25rem;
+            padding-left: 1.4rem;
+        }
+
+        li {
+            margin-bottom: 0.4rem;
+            font-size: 0.95rem;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: var(--font-code);
+            font-size: 0.88rem;
+            margin: 1rem 0 1.5rem;
+            position: relative;
+        }
+
+        code {
+            font-family: var(--font-code);
+            background-color: var(--bg-code);
+            color: var(--accent);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        pre code {
+            background: none;
+            color: var(--text-primary);
+            padding: 0;
+        }
+
+        .copy-code-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .copy-code-btn:hover {
+            color: var(--text-heading);
+            border-color: var(--accent);
+        }
+
+        /* Callout Boxes */
+        .callout {
+            padding: 1rem 1.2rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            border-left: 4px solid var(--callout-info-border);
+            background-color: var(--callout-info-bg);
+            font-size: 0.92rem;
+        }
+
+        .callout.warning {
+            border-left-color: var(--callout-warn-border);
+            background-color: var(--callout-warn-bg);
+        }
+
+        .callout-title {
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+            color: var(--text-heading);
+        }
+
+        /* Feature Cards Grid */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.25rem;
+            margin: 1.5rem 0 2rem;
+        }
+
+        .doc-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .doc-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .doc-card-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .doc-card-desc {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+        }
+
+        /* Parameter Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--bg-table-header);
+            color: var(--text-heading);
+            font-weight: 600;
+        }
+
+        td code {
+            color: var(--accent);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--bg-topbar);
+            border-top: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 3rem;
+        }
+
+        /* Tab switching sections */
+        .doc-section {
+            display: none;
+        }
+
+        .doc-section.active {
+            display: block;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .doc-wrapper {
+                flex-direction: column;
+            }
+            aside.sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+            main.content {
+                padding: 1.5rem 1rem;
+            }
+            .search-container {
+                width: 200px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="hero-logo">
-            ⚡ Code Studio <span>Android</span>
+    <!-- Top Navbar Header -->
+    <header class="topbar">
+        <a href="#" class="brand" onclick="showSection('overview')">
+            <span class="brand-icon">⚡</span> Code Studio <span class="brand-version">v1.2.0</span>
+        </a>
+
+        <!-- Interactive Search -->
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="docSearchInput" placeholder="Search documentation, APIs, guides..." onkeyup="handleSearch()">
+            <div class="search-results-modal" id="searchResultsModal"></div>
         </div>
-        <p class="tagline">An IDE experience on Android featuring full Jetpack Compose UI, Room DB persistence, Git Source Control, and Gemini AI Workspace Copilot.</p>
-        <div class="cta-buttons">
-            <a href="https://github.com" class="btn">View on GitHub</a>
-            <a href="#features" class="btn btn-secondary">Explore Features</a>
+
+        <div class="top-actions">
+            <button class="theme-toggle-btn" onclick="toggleTheme()">
+                <span id="themeIcon">☀️</span> <span id="themeLabel">Light</span>
+            </button>
+            <a href="https://github.com" target="_blank" style="color: var(--text-heading); text-decoration: none; font-weight: 600; font-size: 0.9rem;">GitHub</a>
         </div>
     </header>
 
-    <div class="container">
+    <div class="doc-wrapper">
 
-        <section id="features">
-            <h2>✨ Core Capabilities</h2>
-            <div class="grid">
-                <div class="card">
-                    <div class="card-icon">🤖</div>
-                    <h3>Gemini AI Workspace Copilot</h3>
-                    <p>Indexed workspace awareness across files, symbols, and diagnostics. Proposes multi-file code refactoring, preview diffs, accept/reject, and instant rollback.</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon">🔀</div>
-                    <h3>Git & Sync Commit</h3>
-                    <p>Stage modified files, inspect status, and trigger 1-click <code>Sync Commit</code> (automatically staging, committing, and pushing branch updates).</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon">⌨️</div>
-                    <h3>Command Palette & Shortuts</h3>
-                    <p>Press <code>Ctrl+Shift+P</code> to trigger VS Code commands: AI bug fixes, multi-file refactoring, split editor toggle, and terminal actions.</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon">🖥️</div>
-                    <h3>Split Editor & Activity Bar</h3>
-                    <p>Side-by-side file editing with synchronized tabs, syntax theme customization, line numbers, and interactive terminal console logs.</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon">🗄️</div>
-                    <h3>Room DB Local Persistence</h3>
-                    <p>Offline file management powered by Android Room Database with fast transactional state retention.</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon">⚡</div>
-                    <h3>CI/CD Release Packaging</h3>
-                    <p>Automated GitHub Actions workflow for building release APK artifacts and publishing GitHub Pages documentation.</p>
-                </div>
+        <!-- Left Navigation Sidebar -->
+        <aside class="sidebar">
+            <div class="nav-group">
+                <div class="nav-group-title">Overview</div>
+                <a href="#overview" class="nav-link active" onclick="showSection('overview')">Getting Started</a>
+                <a href="#architecture" class="nav-link" onclick="showSection('architecture')">Architecture & Stack</a>
+                <a href="#ci-cd" class="nav-link" onclick="showSection('ci-cd')">CI/CD & Builds</a>
             </div>
-        </section>
 
-        <section id="quickstart">
-            <h2>🚀 Building the Android App</h2>
-            <p>You can compile and package the app using Gradle or run unit tests on any machine:</p>
+            <div class="nav-group">
+                <div class="nav-group-title">Core Features</div>
+                <a href="#ai-copilot" class="nav-link" onclick="showSection('ai-copilot')">Gemini AI Workspace</a>
+                <a href="#git-source" class="nav-link" onclick="showSection('git-source')">Git & Sync Commit</a>
+                <a href="#command-palette" class="nav-link" onclick="showSection('command-palette')">Command Palette</a>
+            </div>
 
-            <pre><code># Grant executable permissions
+            <div class="nav-group">
+                <div class="nav-group-title">Creating Extensions (.JAR)</div>
+                <a href="#ext-architecture" class="nav-link" onclick="showSection('ext-architecture')">Extension Architecture</a>
+                <a href="#ext-manifest" class="nav-link" onclick="showSection('ext-manifest')">manifest.json Spec</a>
+                <a href="#ext-sdk" class="nav-link" onclick="showSection('ext-sdk')">Extension SDK & APIs</a>
+                <a href="#ext-native" class="nav-link" onclick="showSection('ext-native')">Native C++/JNI Integration</a>
+                <a href="#ext-security" class="nav-link" onclick="showSection('ext-security')">Permissions & Security</a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-title">Extension Tutorials</div>
+                <a href="#tut-hello-world" class="nav-link" onclick="showSection('tut-hello-world')">1. Hello World Extension</a>
+                <a href="#tut-theme" class="nav-link" onclick="showSection('tut-theme')">2. Custom Theme Extension</a>
+                <a href="#tut-native" class="nav-link" onclick="showSection('tut-native')">3. Compiled JNI Extension</a>
+                <a href="#tut-packaging" class="nav-link" onclick="showSection('tut-packaging')">4. Packaging & Publishing</a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="content">
+
+            <!-- SECTION: Overview -->
+            <article id="overview" class="doc-section active">
+                <div class="breadcrumbs"><a href="#">Code Studio</a> / <span>Overview</span></div>
+                <h1>Code Studio for Android</h1>
+                <p class="doc-subtitle">An advanced Visual Studio Code port for Android built with Kotlin, Jetpack Compose, Room DB, and Gemini AI Workspace Copilot.</p>
+
+                <div class="callout">
+                    <div class="callout-title">⚡ Production Native `.JAR` Extension Platform</div>
+                    Code Studio now features a compiled extension architecture. Extensions are distributed as `.jar` packages containing compiled Java/Kotlin bytecode, manifest specifications, and native JNI `.so` libraries.
+                </div>
+
+                <h2>Key Platform Highlights</h2>
+                <div class="card-grid">
+                    <a href="#ai-copilot" class="doc-card" onclick="showSection('ai-copilot')">
+                        <div class="doc-card-title">🤖 Gemini AI Copilot</div>
+                        <div class="doc-card-desc">Full workspace indexing with multi-file refactoring, preview diffs, and instant rollback.</div>
+                    </a>
+                    <a href="#ext-architecture" class="doc-card" onclick="showSection('ext-architecture')">
+                        <div class="doc-card-title">🔌 .JAR Extension Platform</div>
+                        <div class="doc-card-desc">Modular plugin framework supporting bytecode execution and native JNI binary execution.</div>
+                    </a>
+                    <a href="#git-source" class="doc-card" onclick="showSection('git-source')">
+                        <div class="doc-card-title">🔀 Git & Sync Commit</div>
+                        <div class="doc-card-desc">One-click Sync Commit for staging, committing, and pushing branch updates seamlessly.</div>
+                    </a>
+                </div>
+
+                <h2>Quick Quickstart (Building the App)</h2>
+                <pre><button class="copy-code-btn" onclick="copyCode(this)">Copy</button><code># Grant executable permission to Gradle wrapper
 chmod +x gradlew
 
 # Build Debug APK
@@ -252,25 +600,301 @@ chmod +x gradlew
 # Build Release APK
 ./gradlew assembleRelease
 
-# Run Robolectric Unit Tests
+# Execute local JVM unit tests
 ./gradlew testDebugUnitTest</code></pre>
-        </section>
+            </article>
 
-        <section id="architecture">
-            <h2>📐 Architecture & Tech Stack</h2>
-            <ul>
-                <li><strong>UI Layer:</strong> Jetpack Compose with Material 3 Dynamic Color & Custom VS Code Dark Palette.</li>
-                <li><strong>State Management:</strong> ViewModel, Kotlin Coroutines, and <code>StateFlow</code> / <code>collectAsStateWithLifecycle</code>.</li>
-                <li><strong>Database:</strong> Room DB with Kotlin Symbol Processing (KSP).</li>
-                <li><strong>Network:</strong> OkHttp3 & Rest API integration with Gemini 3.5 Flash.</li>
-            </ul>
-        </section>
+            <!-- SECTION: Architecture -->
+            <article id="architecture" class="doc-section">
+                <div class="breadcrumbs"><a href="#">Code Studio</a> / <span>Architecture</span></div>
+                <h1>Architecture & Tech Stack</h1>
+                <p class="doc-subtitle">Under the hood design of Code Studio Android IDE.</p>
 
+                <h2>Tech Stack Overview</h2>
+                <table>
+                    <thead>
+                        <tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>UI Framework</td><td>Jetpack Compose (Material 3)</td><td>Declarative UI with adaptive dark/light VS Code theme rendering</td></tr>
+                        <tr><td>State Engine</td><td>ViewModel & StateFlow</td><td>Unidirectional state flow with coroutines</td></tr>
+                        <tr><td>Local Storage</td><td>Room DB & KSP</td><td>Transactional offline persistence for files and workspace metadata</td></tr>
+                        <tr><td>Plugin Runtime</td><td>DexClassLoader + JNI</td><td>Isolated .JAR bytecode execution and native .so binary loading</td></tr>
+                        <tr><td>AI Engine</td><td>Gemini REST API</td><td>Workspace indexing and multi-file code synthesis</td></tr>
+                    </tbody>
+                </table>
+            </article>
+
+            <!-- SECTION: CI/CD -->
+            <article id="ci-cd" class="doc-section">
+                <div class="breadcrumbs"><a href="#">Code Studio</a> / <span>Builds & CI/CD</span></div>
+                <h1>CI/CD & GitHub Actions Workflows</h1>
+                <p class="doc-subtitle">Automated build and documentation deployment pipeline.</p>
+
+                <h2>Workflow Specifications</h2>
+                <p>The repository includes two automated workflows under <code>.github/workflows/</code>:</p>
+
+                <ul>
+                    <li><code>ci.yml</code>: Validates Kotlin compilation and runs Robolectric unit tests on every pull request.</li>
+                    <li><code>android-build-release.yml</code>: Assembles release APK artifacts upon main branch updates.</li>
+                    <li><code>deploy-github-pages.yml</code>: Automatically builds and deploys this documentation portal to GitHub Pages.</li>
+                </ul>
+            </article>
+
+            <!-- SECTION: AI Copilot -->
+            <article id="ai-copilot" class="doc-section">
+                <div class="breadcrumbs"><a href="#">Core Features</a> / <span>Gemini AI Copilot</span></div>
+                <h1>Gemini AI Workspace Copilot</h1>
+                <p class="doc-subtitle">Intelligent workspace indexing and multi-file automated refactoring.</p>
+
+                <p>The AI Copilot maintains real-time context of all files, symbols, imports, and diagnostics in your project. It allows you to ask natural language questions or request complex code edits across multiple files simultaneously.</p>
+            </article>
+
+            <!-- SECTION: Git & Source Control -->
+            <article id="git-source" class="doc-section">
+                <div class="breadcrumbs"><a href="#">Core Features</a> / <span>Git & Source Control</span></div>
+                <h1>Git & Sync Commit System</h1>
+                <p class="doc-subtitle">Streamlined source control operations inside Android.</p>
+
+                <p>The Source Control panel tracks modified files and provides a one-click <strong>Sync Commit</strong> button (`Ctrl+Shift+S`) that automatically stages all changes, creates a signed git commit, and pushes to origin/main with status logs in the interactive terminal.</p>
+            </article>
+
+            <!-- SECTION: Command Palette -->
+            <article id="command-palette" class="doc-section">
+                <div class="breadcrumbs"><a href="#">Core Features</a> / <span>Command Palette</span></div>
+                <h1>Command Palette (`Ctrl+Shift+P`)</h1>
+                <p class="doc-subtitle">Centralized access to all IDE and extension actions.</p>
+
+                <p>Type commands or keyboard shortcuts to execute AI bug fixes, git operations, file creation, extension commands, and view toggles instantly.</p>
+            </article>
+
+            <!-- SECTION: Extension Architecture -->
+            <article id="ext-architecture" class="doc-section">
+                <div class="breadcrumbs"><a href="#">Extensions</a> / <span>Architecture</span></div>
+                <h1>Native .JAR Extension Architecture</h1>
+                <p class="doc-subtitle">A modular extension platform designed for performance and security.</p>
+
+                <h2>Package File Anatomy</h2>
+                <p>Every extension is packaged into a single compiled <code>.jar</code> file containing metadata, bytecode, assets, and optional JNI native libraries:</p>
+
+                <pre><button class="copy-code-btn" onclick="copyCode(this)">Copy</button><code>MyExtension.jar
+├── META-INF/
+│   └── MANIFEST.MF
+├── manifest.json
+├── classes/
+│   └── com/example/extension/MyExtension.class
+├── lib/
+│   ├── arm64-v8a/
+│   │   └── libextension.so
+│   ├── armeabi-v7a/
+│   │   └── libextension.so
+│   └── x86_64/
+├── themes/
+├── snippets/
+├── README.md
+└── LICENSE</code></pre>
+            </article>
+
+            <!-- SECTION: manifest.json Spec -->
+            <article id="ext-manifest" class="doc-section">
+                <div class="breadcrumbs"><a href="#">Extensions</a> / <span>manifest.json Specification</span></div>
+                <h1>manifest.json Specification</h1>
+                <p class="doc-subtitle">Configuration parameters for Code Studio .JAR extensions.</p>
+
+                <pre><button class="copy-code-btn" onclick="copyCode(this)">Copy</button><code>{
+  "id": "com.developer.git.supercharge",
+  "uuid": "8f88a912-421b-419b-a312-70b13f173111",
+  "name": "Git Supercharge",
+  "displayName": "Git Supercharge Tools",
+  "version": "1.2.0",
+  "description": "Adds advanced Git status indicators and automated sync.",
+  "author": "Code Studio Team",
+  "category": "Source Control",
+  "permissions": [
+    "file_system",
+    "commands",
+    "ui_contribution",
+    "native_code"
+  ],
+  "entryPoints": {
+    "mainClass": "com.developer.git.GitSuperchargeExtension",
+    "nativeLibrary": "libgit_helper.so"
+  },
+  "commands": [
+    {
+      "id": "extension.git.sync",
+      "title": "Git: Supercharge Fast Sync",
+      "shortcut": "Ctrl+Alt+G"
+    }
+  ]
+}</code></pre>
+            </article>
+
+            <!-- SECTION: Extension SDK -->
+            <article id="ext-sdk" class="doc-section">
+                <div class="breadcrumbs"><a href="#">Extensions</a> / <span>SDK & APIs</span></div>
+                <h1>Extension SDK & API Reference</h1>
+                <p class="doc-subtitle">Interface definitions for extension developers.</p>
+
+                <h2>Core SDK Services</h2>
+                <table>
+                    <thead><tr><th>API</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>EditorAPI</code></td><td>Read and modify active editor content, cursor positions, and file selection.</td></tr>
+                        <tr><td><code>WorkspaceAPI</code></td><td>Read/write workspace files, list directories, and delete files.</td></tr>
+                        <tr><td><code>CommandRegistry</code></td><td>Register custom commands in Command Palette and handle execution events.</td></tr>
+                        <tr><td><code>UIContributionRegistry</code></td><td>Update status bar messages, dialogs, and activity bar items.</td></tr>
+                        <tr><td><code>TerminalAPI</code></td><td>Send commands to the terminal console and stream custom log outputs.</td></tr>
+                        <tr><td><code>NotificationAPI</code></td><td>Display info, warning, and error notifications to the user.</td></tr>
+                    </tbody>
+                </table>
+            </article>
+
+            <!-- SECTION: Native Integration -->
+            <article id="ext-native" class="doc-section">
+                <div class="breadcrumbs"><a href="#">Extensions</a> / <span>Native JNI</span></div>
+                <h1>Native C++/JNI Integration (.so)</h1>
+                <p class="doc-subtitle">Executing high-performance compiled binary libraries inside extensions.</p>
+
+                <p>Place compiled C/C++, Rust, or Go shared libraries inside <code>lib/&lt;abi&gt;/</code> inside your `.jar`. Declare the `"native_code"` permission and `"nativeLibrary"` in `manifest.json`. Code Studio will extract and load the library securely at runtime.</p>
+            </article>
+
+            <!-- SECTION: Security -->
+            <article id="ext-security" class="doc-section">
+                <div class="breadcrumbs"><a href="#">Extensions</a> / <span>Permissions & Security</span></div>
+                <h1>Permissions & Security Model</h1>
+                <p class="doc-subtitle">Sandboxed permission enforcement.</p>
+
+                <p>Every extension request is filtered through a <code>SecurityManager</code>. Unauthorized calls throw a <code>SecurityException</code> to prevent malicious behavior.</p>
+            </article>
+
+            <!-- SECTION: Tutorial 1 -->
+            <article id="tut-hello-world" class="doc-section">
+                <div class="breadcrumbs"><a href="#">Tutorials</a> / <span>1. Hello World</span></div>
+                <h1>Tutorial: Building Your First .JAR Extension</h1>
+                <p class="doc-subtitle">Create a basic Hello World extension in Kotlin.</p>
+
+                <pre><button class="copy-code-btn" onclick="copyCode(this)">Copy</button><code>package com.example.hello
+
+import com.example.extension.api.ExtensionContext
+import com.example.extension.api.ExtensionLifecycle
+import com.example.extension.manifest.ExtensionPermission
+
+class HelloWorldExtension : ExtensionLifecycle {
+    override fun onActivate(context: ExtensionContext) {
+        context.securityManager.checkPermission(ExtensionPermission.UI_CONTRIBUTION)
+        context.uiRegistry.setStatusBarMessage("👋 Hello World Extension Active!", 4000)
+
+        context.commandRegistry.registerCommand("extension.hello.sayHello") {
+            context.notificationAPI.showInfo("Hello World from Code Studio Extension!")
+        }
+    }
+}</code></pre>
+            </article>
+
+            <!-- SECTION: Tutorial 2 -->
+            <article id="tut-theme" class="doc-section">
+                <div class="breadcrumbs"><a href="#">Tutorials</a> / <span>2. Custom Theme</span></div>
+                <h1>Tutorial: Creating a Custom Theme Extension</h1>
+                <p class="doc-subtitle">Bundle custom syntax highlight palettes into a `.jar` package.</p>
+            </article>
+
+            <!-- SECTION: Tutorial 3 -->
+            <article id="tut-native" class="doc-section">
+                <div class="breadcrumbs"><a href="#">Tutorials</a> / <span>3. Native C++ JNI</span></div>
+                <h1>Tutorial: Building a Native C++ JNI Extension</h1>
+                <p class="doc-subtitle">Compile C++ with Android NDK and package inside `.jar`.</p>
+            </article>
+
+            <!-- SECTION: Tutorial 4 -->
+            <article id="tut-packaging" class="doc-section">
+                <div class="breadcrumbs"><a href="#">Tutorials</a> / <span>4. Packaging & Publishing</span></div>
+                <h1>Tutorial: Packaging & Distributing `.jar` Extensions</h1>
+                <p class="doc-subtitle">Compile bytecode and deploy extensions directly into Code Studio.</p>
+            </article>
+
+        </main>
     </div>
 
+    <!-- Footer -->
     <footer>
         <p>© 2026 Code Studio for Android — Powered by Google AI Studio & Jetpack Compose</p>
     </footer>
 
+    <!-- Interactive Search and Theme Script -->
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute("data-theme");
+            const next = current === "dark" ? "light" : "dark";
+            html.setAttribute("data-theme", next);
+            document.getElementById("themeIcon").textContent = next === "dark" ? "☀️" : "🌙";
+            document.getElementById("themeLabel").textContent = next === "dark" ? "Light" : "Dark";
+        }
+
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.doc-section');
+            sections.forEach(s => s.classList.remove('active'));
+
+            const target = document.getElementById(sectionId);
+            if (target) {
+                target.classList.add('active');
+            }
+
+            const links = document.querySelectorAll('.nav-link');
+            links.forEach(l => {
+                l.classList.remove('active');
+                if (l.getAttribute('href') === '#' + sectionId) {
+                    l.classList.add('active');
+                }
+            });
+
+            document.getElementById('searchResultsModal').style.display = 'none';
+        }
+
+        function copyCode(btn) {
+            const code = btn.nextElementSibling.innerText;
+            navigator.clipboard.writeText(code);
+            btn.textContent = "Copied!";
+            setTimeout(() => { btn.textContent = "Copy"; }, 2000);
+        }
+
+        const searchIndex = [
+            { id: "overview", title: "Getting Started & Overview", snippet: "An advanced Visual Studio Code port for Android featuring Jetpack Compose and Gemini AI." },
+            { id: "architecture", title: "Architecture & Tech Stack", snippet: "Under the hood design: Compose, ViewModel, Room DB, DexClassLoader." },
+            { id: "ai-copilot", title: "Gemini AI Workspace Copilot", snippet: "Indexed workspace context for multi-file automated code edits." },
+            { id: "git-source", title: "Git & Sync Commit", snippet: "Stage, commit, and push changes in one click with Sync Commit." },
+            { id: "ext-architecture", title: "Native .JAR Extension Architecture", snippet: "Bytecode execution and JNI native library support inside .jar packages." },
+            { id: "ext-manifest", title: "manifest.json Specification", snippet: "Extension entry points, permissions, and commands definition." },
+            { id: "ext-sdk", title: "Extension SDK & API Reference", snippet: "EditorAPI, WorkspaceAPI, CommandRegistry, UIContributionRegistry, TerminalAPI." },
+            { id: "tut-hello-world", title: "Tutorial: Hello World Extension", snippet: "Step-by-step guide to writing your first extension in Kotlin." }
+        ];
+
+        function handleSearch() {
+            const query = document.getElementById('docSearchInput').value.toLowerCase().trim();
+            const modal = document.getElementById('searchResultsModal');
+
+            if (!query) {
+                modal.style.display = 'none';
+                return;
+            }
+
+            const matches = searchIndex.filter(item => 
+                item.title.toLowerCase().includes(query) || item.snippet.toLowerCase().includes(query)
+            );
+
+            if (matches.length === 0) {
+                modal.innerHTML = '<div class="search-result-item" style="color: var(--text-muted);">No documentation matching search query.</div>';
+            } else {
+                modal.innerHTML = matches.map(m => `
+                    <div class="search-result-item" onclick="showSection('${m.id}')">
+                        <div class="search-result-title">${m.title}</div>
+                        <div class="search-result-snippet">${m.snippet}</div>
+                    </div>
+                `).join('');
+            }
+            modal.style.display = 'block';
+        }
+    </script>
 </body>
 </html>

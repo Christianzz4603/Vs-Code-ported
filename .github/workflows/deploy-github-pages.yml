@@ -3,6 +3,9 @@ name: Deploy GitHub Pages Documentation
 on:
   push:
     branches: [ "main", "master" ]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/deploy-github-pages.yml'
   workflow_dispatch:
 
 # Grant permissions required for GitHub Pages deployment
