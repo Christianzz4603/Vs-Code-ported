@@ -1,0 +1,10 @@
+# This file is an example template for local SDK and environment variables.
+# Android Studio automatically generates local.properties on your machine.
+# DO NOT COMMIT local.properties WITH MACHINE-SPECIFIC PATHS OR SENSITIVE KEYS.
+
+# Location of the Android SDK. This is only used by Gradle on local machines.
+# sdk.dir=/Users/username/Library/Android/sdk
+# sdk.dir=C\:\\Users\\username\\AppData\\Local\\Android\\Sdk
+
+# Gemini API Key for AI Copilot (Managed in AI Studio Secrets panel or .env)
+# GEMINI_API_KEY=YOUR_GEMINI_API_KEY

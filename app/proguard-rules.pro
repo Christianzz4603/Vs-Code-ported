@@ -1,21 +1,34 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ProGuard & R8 optimization rules for Code Studio (VS Code Android)
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Keep line number info for crash reports & stack traces
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep Jetpack Compose & Material 3
+-keep class androidx.compose.** { *; }
+-dontwarn androidx.compose.**
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Keep Room Database Entities & DAOs
+-keep class com.example.data.local.** { *; }
+-keepclassmembers class * extends androidx.room.RoomDatabase { *; }
+-dontwarn androidx.room.**
+
+# Keep Data Models & Enums
+-keep class com.example.model.** { *; }
+-keepclassmembers enum com.example.model.** { *; }
+
+# Keep Moshi JSON Codegen & Adapter classes
+-keep class com.squareup.moshi.** { *; }
+-keepclassmembers class * {
+    @com.squareup.moshi.Json *;
+}
+
+# Keep OkHttp & Retrofit
+-dontwarn okhttp3.**
+-dontwarn retrofit2.**
+-keep class okhttp3.** { *; }
+-keep class retrofit2.** { *; }
+
+# Keep Kotlin Coroutines
+-keepclassmembers class kotlinx.coroutines.** { *; }
+-dontwarn kotlinx.coroutines.**
