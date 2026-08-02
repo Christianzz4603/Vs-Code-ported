@@ -1,4 +1,4 @@
-name: Build Android App
+name: Build & Deploy Workflow
 
 on:
   push:
@@ -7,9 +7,19 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
+# Grant permissions required for build artifacts and GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "build-and-deploy-${{ github.ref }}"
+  cancel-in-progress: true
+
 jobs:
-  build:
-    name: Build & Test Android App
+  build-and-test:
+    name: Compile, Test & Build APK
     runs-on: ubuntu-latest
 
     steps:
@@ -26,13 +36,13 @@ jobs:
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
 
-      - name: Check Gradle Compilation
+      - name: Compile Kotlin Code
         run: ./gradlew compileDebugKotlin
 
       - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest --continue
+        run: ./gradlew testDebugUnitTest
 
-      - name: Build Debug & Release APK
+      - name: Build Debug & Release APKs
         run: ./gradlew assembleDebug assembleRelease --no-daemon
 
       - name: Upload Debug APK Artifact
@@ -46,3 +56,28 @@ jobs:
         with:
           name: code-studio-release-apk
           path: app/build/outputs/apk/release/*.apk
+
+  deploy-docs:
+    name: Deploy GitHub Pages Documentation
+    needs: build-and-test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Documentation Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'docs/'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
