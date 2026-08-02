@@ -447,10 +447,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private val _symbolInsertFlow = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val symbolInsertFlow: SharedFlow<String> = _symbolInsertFlow.asSharedFlow()
+
     fun insertSymbolToActiveFile(symbol: String) {
-        val currentTabId = _activeTabId.value ?: return
-        val currentTab = _openTabs.value.find { it.fileId == currentTabId } ?: return
-        updateActiveTabContent(currentTab.content + symbol)
+        _symbolInsertFlow.tryEmit(symbol)
     }
 
     fun clearTerminal() {

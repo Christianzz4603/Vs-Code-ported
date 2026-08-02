@@ -1,6 +1,9 @@
 package com.example.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,8 +22,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -34,6 +41,8 @@ import com.example.model.ProblemItem
 import com.example.model.ProblemSeverity
 import com.example.ui.theme.EditorColorScheme
 import com.example.util.LanguageUtils
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.launch
 
 data class CompletionItem(
     val label: String,
@@ -48,6 +57,7 @@ fun CodeEditor(
     activeTab: OpenTab?,
     settings: EditorSettings,
     colors: EditorColorScheme,
+    symbolInsertFlow: SharedFlow<String>? = null,
     onContentChanged: (String) -> Unit,
     onReportProblems: (List<ProblemItem>) -> Unit = {},
     modifier: Modifier = Modifier
@@ -83,6 +93,26 @@ fun CodeEditor(
 
     var textFieldValue by remember(activeTab.fileId) {
         mutableStateOf(TextFieldValue(text = activeTab.content, selection = TextRange(activeTab.content.length)))
+    }
+
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val coroutineScope = rememberCoroutineScope()
+    val density = LocalDensity.current
+
+    // Listen to symbol insertions from TouchToolbar
+    LaunchedEffect(symbolInsertFlow, activeTab.fileId) {
+        symbolInsertFlow?.collect { symbol ->
+            val currentText = textFieldValue.text
+            val selection = textFieldValue.selection
+            val start = minOf(selection.start, selection.end)
+            val end = maxOf(selection.start, selection.end)
+            val newText = currentText.substring(0, start) + symbol + currentText.substring(end)
+            val newCursor = start + symbol.length
+            textFieldValue = TextFieldValue(text = newText, selection = TextRange(newCursor))
+            onContentChanged(newText)
+            focusRequester.requestFocus()
+        }
     }
 
     // Diagnostics State
@@ -143,11 +173,29 @@ fun CodeEditor(
     }
 
     // Soft Keyboard Inset handling & auto-scroll
+    val isImeVisible = WindowInsets.isImeVisible
+
+    // Auto-scroll effect to keep cursor line visible above keyboard
+    LaunchedEffect(cursorLine, isImeVisible, textFieldValue.selection) {
+        if (verticalScrollState.maxValue > 0) {
+            val fontSizeSp = settings.fontSizeSp
+            val lineHeightPx = with(density) { (fontSizeSp * 1.45).sp.toPx() }
+            val targetY = ((cursorLine - 1) * lineHeightPx).toInt()
+            val visibleHeight = verticalScrollState.viewportSize
+            if (visibleHeight > 0) {
+                val currentScroll = verticalScrollState.value
+                if (targetY < currentScroll || targetY + lineHeightPx > currentScroll + visibleHeight) {
+                    val scrollGoal = (targetY - visibleHeight / 3).coerceIn(0, verticalScrollState.maxValue)
+                    verticalScrollState.animateScrollTo(scrollGoal)
+                }
+            }
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .imePadding()
-            .windowInsetsPadding(WindowInsets.ime)
             .background(colors.editorBackground)
     ) {
         // Sticky Breadcrumb Bar
@@ -179,6 +227,7 @@ fun CodeEditor(
                                 val formatted = LanguageUtils.formatCode(textFieldValue.text, activeTab.language, settings.tabSizeSpaces)
                                 textFieldValue = TextFieldValue(text = formatted, selection = TextRange(formatted.length))
                                 onContentChanged(formatted)
+                                focusRequester.requestFocus()
                             }
                         )
                         Text(
@@ -222,6 +271,7 @@ fun CodeEditor(
                         }
                         textFieldValue = TextFieldValue(text = newText, selection = TextRange(newText.length))
                         onContentChanged(newText)
+                        focusRequester.requestFocus()
                     }
                 },
                 onClose = { showSearchReplace = false }
@@ -234,8 +284,13 @@ fun CodeEditor(
                 lines = lines,
                 colors = colors,
                 onSelectLine = { lineIdx ->
-                    // Scroll to line
                     showOutlineView = false
+                    val fontSizeSp = settings.fontSizeSp
+                    val lineHeightPx = (fontSizeSp * 1.45) * density.density
+                    val targetY = (lineIdx * lineHeightPx).toInt()
+                    coroutineScope.launch {
+                        verticalScrollState.animateScrollTo(targetY.coerceIn(0, verticalScrollState.maxValue))
+                    }
                 }
             )
         }
@@ -287,6 +342,8 @@ fun CodeEditor(
                                 )
                             }
                         }
+                        // Bottom scroll margin space
+                        Spacer(modifier = Modifier.height(280.dp))
                     }
 
                     Box(modifier = Modifier.fillMaxHeight().width(1.dp).background(colors.activityBarBackground))
@@ -301,35 +358,47 @@ fun CodeEditor(
                         .verticalScroll(verticalScrollState)
                         .horizontalScroll(horizontalScrollState)
                 ) {
-                    BasicTextField(
-                        value = textFieldValue,
-                        onValueChange = { newValue ->
-                            val updatedText = handleSmartAutoClosing(newValue.text, textFieldValue.text, newValue.selection)
-                            val newSelection = if (updatedText.length != newValue.text.length) {
-                                TextRange(newValue.selection.start)
-                            } else newValue.selection
+                    Column {
+                        BasicTextField(
+                            value = textFieldValue,
+                            onValueChange = { newValue ->
+                                val isComposing = newValue.composition != null
+                                val updatedText = handleSmartAutoClosing(newValue.text, textFieldValue.text, newValue.selection, isComposing)
+                                val newSelection = if (updatedText.length != newValue.text.length) {
+                                    TextRange(newValue.selection.start)
+                                } else newValue.selection
 
-                            textFieldValue = TextFieldValue(text = updatedText, selection = newSelection)
-                            onContentChanged(updatedText)
+                                textFieldValue = TextFieldValue(text = updatedText, selection = newSelection, composition = newValue.composition)
+                                onContentChanged(updatedText)
 
-                            // Trigger IntelliSense completions
-                            val currentWord = getCurrentWord(updatedText, newSelection.start)
-                            if (currentWord.length >= 1 && settings.autoCloseBrackets) {
-                                completions = generateIntelliSenseCompletions(currentWord, activeTab.language, updatedText)
-                                showIntelliSense = completions.isNotEmpty()
-                            } else {
-                                showIntelliSense = false
-                            }
-                        },
-                        textStyle = TextStyle(
-                            color = colors.editorTextColor,
-                            fontSize = settings.fontSizeSp.sp,
-                            fontFamily = FontFamily.Monospace,
-                            lineHeight = (settings.fontSizeSp * 1.45).sp
-                        ),
-                        cursorBrush = SolidColor(colors.accentColor),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                                // Trigger IntelliSense completions only when not composing IME text
+                                if (!isComposing) {
+                                    val currentWord = getCurrentWord(updatedText, newSelection.start)
+                                    if (currentWord.length >= 1 && settings.autoCloseBrackets) {
+                                        completions = generateIntelliSenseCompletions(currentWord, activeTab.language, updatedText)
+                                        showIntelliSense = completions.isNotEmpty()
+                                    } else {
+                                        showIntelliSense = false
+                                    }
+                                } else {
+                                    showIntelliSense = false
+                                }
+                            },
+                            textStyle = TextStyle(
+                                color = colors.editorTextColor,
+                                fontSize = settings.fontSizeSp.sp,
+                                fontFamily = FontFamily.Monospace,
+                                lineHeight = (settings.fontSizeSp * 1.45).sp
+                            ),
+                            cursorBrush = SolidColor(colors.accentColor),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester)
+                        )
+
+                        // Bottom scroll margin space to allow any line to scroll comfortably above soft keyboard
+                        Spacer(modifier = Modifier.height(280.dp))
+                    }
                 }
 
                 // VS Code Minimap Column
@@ -345,11 +414,11 @@ fun CodeEditor(
                         .align(Alignment.BottomStart)
                         .padding(bottom = 8.dp, start = 48.dp)
                         .widthIn(max = 280.dp)
-                        .heightIn(max = 160.dp),
+                        .heightIn(max = 180.dp),
                     shape = RoundedCornerShape(8.dp),
                     color = colors.sidebarBackground,
                     shadowElevation = 8.dp,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, colors.accentColor)
+                    border = BorderStroke(1.dp, colors.accentColor)
                 ) {
                     LazyColumn(modifier = Modifier.padding(4.dp)) {
                         items(completions) { item ->
@@ -360,9 +429,11 @@ fun CodeEditor(
                                         val word = getCurrentWord(textFieldValue.text, textFieldValue.selection.start)
                                         val start = textFieldValue.selection.start - word.length
                                         val newText = textFieldValue.text.replaceRange(start, textFieldValue.selection.start, item.insertText)
-                                        textFieldValue = TextFieldValue(text = newText, selection = TextRange(start + item.insertText.length))
+                                        val newCursor = start + item.insertText.length
+                                        textFieldValue = TextFieldValue(text = newText, selection = TextRange(newCursor))
                                         onContentChanged(newText)
                                         showIntelliSense = false
+                                        focusRequester.requestFocus()
                                     }
                                     .padding(horizontal = 8.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -388,7 +459,7 @@ fun CodeEditor(
                         .padding(8.dp),
                     shape = RoundedCornerShape(6.dp),
                     color = Color(0xFF332211),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFF9800))
+                    border = BorderStroke(1.dp, Color(0xFFFF9800))
                 ) {
                     Row(
                         modifier = Modifier.padding(8.dp),
@@ -404,8 +475,9 @@ fun CodeEditor(
     }
 }
 
-private fun handleSmartAutoClosing(newText: String, oldText: String, selection: TextRange): String {
-    if (newText.length == oldText.length + 1) {
+private fun handleSmartAutoClosing(newText: String, oldText: String, selection: TextRange, isComposing: Boolean): String {
+    if (isComposing) return newText
+    if (newText.length == oldText.length + 1 && selection.start > 0) {
         val insertedChar = newText.getOrNull(selection.start - 1) ?: return newText
         val pairMap = mapOf('(' to ")", '[' to "]", '{' to "}", '"' to "\"", '\'' to "'")
         if (pairMap.containsKey(insertedChar)) {

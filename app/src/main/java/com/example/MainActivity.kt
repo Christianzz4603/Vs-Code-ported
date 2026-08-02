@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier
                         .fillMaxSize()
-                        .windowInsetsPadding(WindowInsets.safeDrawing),
+                        .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)),
                     color = themeColors.editorBackground
                 ) {
                     CodeStudioAppScreen(viewModel = viewModel)
@@ -263,6 +263,7 @@ fun CodeStudioAppScreen(viewModel: MainViewModel) {
                                 activeTab = activeOpenTab,
                                 settings = settings,
                                 colors = colors,
+                                symbolInsertFlow = viewModel.symbolInsertFlow,
                                 onContentChanged = { newContent -> viewModel.updateActiveTabContent(newContent) },
                                 onReportProblems = { newProblems -> viewModel.reportDiagnostics(newProblems) }
                             )
