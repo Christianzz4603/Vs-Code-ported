@@ -292,15 +292,72 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun createFile(name: String, isDirectory: Boolean) {
+    fun createFile(name: String, path: String = "", content: String = "", isDirectory: Boolean = false) {
         val projectId = _currentProjectId.value ?: return
+        val finalPath = if (path.isBlank()) name else path
         viewModelScope.launch {
-            val fileId = repository.createFile(projectId, name, "", "", isDirectory)
+            val fileId = repository.createFile(projectId, name, content, finalPath, isDirectory)
             if (!isDirectory) {
                 val file = repository.getFileById(fileId)
                 if (file != null) openFile(file)
             }
         }
+    }
+
+    fun renameFile(file: CodeFileEntity, newName: String) {
+        val newPath = if (file.path.contains("/")) file.path.substringBeforeLast("/") + "/" + newName else newName
+        val lang = com.example.util.LanguageUtils.detectLanguage(newName, file.content)
+        viewModelScope.launch {
+            val updated = file.copy(name = newName, path = newPath, language = lang)
+            repository.updateFile(updated)
+
+            // Update open tab if open
+            val openTab = _openTabs.value.find { it.fileId == file.id }
+            if (openTab != null) {
+                val updatedTabs = _openTabs.value.map {
+                    if (it.fileId == file.id) it.copy(name = newName, path = newPath, language = lang) else it
+                }
+                _openTabs.value = updatedTabs
+            }
+            appendTerminalLine("Renamed ${file.name} -> $newName", TerminalLineType.SUCCESS)
+        }
+    }
+
+    fun duplicateFile(file: CodeFileEntity) {
+        val dupName = if (file.name.contains(".")) {
+            file.name.substringBeforeLast(".") + "_copy." + file.name.substringAfterLast(".")
+        } else {
+            file.name + "_copy"
+        }
+        val dupPath = if (file.path.contains("/")) file.path.substringBeforeLast("/") + "/" + dupName else dupName
+        createFile(dupName, dupPath, file.content, file.isDirectory)
+        appendTerminalLine("Duplicated file: $dupName", TerminalLineType.SUCCESS)
+    }
+
+    fun importSafWorkspaceTree(context: android.content.Context, treeUri: android.net.Uri) {
+        com.example.util.SafManager.persistUriPermission(context, treeUri)
+        val folderName = treeUri.lastPathSegment?.substringAfterLast(":") ?: "SAF Workspace"
+        viewModelScope.launch {
+            val newProjId = repository.createProject(folderName, "SAF Device Workspace: $treeUri", "saf")
+            selectProject(newProjId)
+            val safFiles = com.example.util.SafManager.readSafTree(context, treeUri, newProjId)
+            safFiles.forEach { safFile ->
+                repository.createFile(newProjId, safFile.name, safFile.content, safFile.path, safFile.isDirectory)
+            }
+            appendTerminalLine("📂 Opened SAF Workspace: $folderName (${safFiles.size} files imported)", TerminalLineType.SUCCESS)
+        }
+    }
+
+    fun importSafSingleFile(context: android.content.Context, fileUri: android.net.Uri) {
+        val projId = _currentProjectId.value ?: return
+        val fileName = fileUri.lastPathSegment?.substringAfterLast("/")?.substringAfterLast(":") ?: "imported_file"
+        val content = com.example.util.SafManager.readDocumentContent(context, fileUri)
+        createFile(fileName, fileName, content, false)
+        appendTerminalLine("📄 Imported SAF File: $fileName", TerminalLineType.SUCCESS)
+    }
+
+    fun reportDiagnostics(newProblems: List<ProblemItem>) {
+        _problems.value = newProblems
     }
 
     fun deleteFile(file: CodeFileEntity) {

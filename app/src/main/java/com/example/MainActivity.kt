@@ -65,6 +65,22 @@ fun CodeStudioAppScreen(viewModel: MainViewModel) {
     val breakpoints by viewModel.breakpoints.collectAsStateWithLifecycle()
 
     val context = androidx.compose.ui.platform.LocalContext.current
+    val safFolderLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.importSafWorkspaceTree(context, uri)
+        }
+    }
+
+    val safFileLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.importSafSingleFile(context, uri)
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.initExtensionManager(context)
     }
@@ -83,7 +99,7 @@ fun CodeStudioAppScreen(viewModel: MainViewModel) {
                 onToggleSidebar = { viewModel.toggleSidebar() },
                 onTogglePanel = { viewModel.togglePanel() },
                 onToggleSplit = { viewModel.toggleSplitEditor() },
-                onNewFile = { viewModel.createFile("Untitled.kt", false) },
+                onNewFile = { viewModel.createFile("Untitled.txt", "", "", false) },
                 onNewProject = { viewModel.createProject("New Project", "Native Android App", "compose") },
                 onRunFile = { viewModel.runActiveFile() }
             )
@@ -134,8 +150,12 @@ fun CodeStudioAppScreen(viewModel: MainViewModel) {
                                     onProjectSelected = { viewModel.selectProject(it) },
                                     onCreateProject = { name, desc, tpl -> viewModel.createProject(name, desc, tpl) },
                                     onFileSelected = { viewModel.openFile(it) },
-                                    onCreateFile = { name, isDir -> viewModel.createFile(name, isDir) },
-                                    onDeleteFile = { viewModel.deleteFile(it) }
+                                    onCreateFile = { name, path, content, isDir -> viewModel.createFile(name, path, content, isDir) },
+                                    onDeleteFile = { viewModel.deleteFile(it) },
+                                    onRenameFile = { file, newName -> viewModel.renameFile(file, newName) },
+                                    onDuplicateFile = { file -> viewModel.duplicateFile(file) },
+                                    onOpenSafFolder = { safFolderLauncher.launch(null) },
+                                    onOpenSafFile = { safFileLauncher.launch(arrayOf("*/*")) }
                                 )
                             }
                             ActivityTab.SEARCH -> {
@@ -243,7 +263,8 @@ fun CodeStudioAppScreen(viewModel: MainViewModel) {
                                 activeTab = activeOpenTab,
                                 settings = settings,
                                 colors = colors,
-                                onContentChanged = { newContent -> viewModel.updateActiveTabContent(newContent) }
+                                onContentChanged = { newContent -> viewModel.updateActiveTabContent(newContent) },
+                                onReportProblems = { newProblems -> viewModel.reportDiagnostics(newProblems) }
                             )
                         }
 
@@ -298,7 +319,7 @@ fun CodeStudioAppScreen(viewModel: MainViewModel) {
                             viewModel.toggleSidebar(true)
                             viewModel.syncCommit("Sync commit from Command Palette")
                         }
-                        "new_file" -> viewModel.createFile("Untitled.kt", false)
+                        "new_file" -> viewModel.createFile("Untitled.txt", "", "", false)
                         "toggle_split" -> viewModel.toggleSplitEditor()
                         "open_extensions" -> {
                             viewModel.selectActivityTab(ActivityTab.EXTENSIONS)

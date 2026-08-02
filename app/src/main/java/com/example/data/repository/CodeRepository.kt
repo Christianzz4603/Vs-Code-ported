@@ -63,6 +63,10 @@ class CodeRepository(private val codeDao: CodeDao) {
         codeDao.updateFile(updated)
     }
 
+    suspend fun updateFile(file: CodeFileEntity) {
+        codeDao.updateFile(file)
+    }
+
     suspend fun deleteFile(fileId: Long) {
         val file = codeDao.getFileById(fileId) ?: return
         if (file.isDirectory) {
